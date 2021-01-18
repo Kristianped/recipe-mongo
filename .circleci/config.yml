@@ -7,7 +7,7 @@ jobs:
   build:
     docker:
       # specify the version you desire here
-      - image: circleci/openjdk:8-jdk
+      - image: circleci/openjdk:11-jdk
 
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
@@ -43,8 +43,8 @@ jobs:
 
       - store_test_results:
           path: target/surefire-reports
-            - store_artifacts:
-                path: target/site/jacoco/index.html
+      - store_artifacts:
+          path: target/site/jacoco/index.html
 
       #Codecov integration
       - run:
