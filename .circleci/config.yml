@@ -1,5 +1,5 @@
 # Check https://circleci.com/docs/2.0/language-java/ for more details
-#
+# Using gradle with this
 version: 2
 jobs:
   build:
