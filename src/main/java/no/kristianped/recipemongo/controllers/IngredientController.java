@@ -40,10 +40,10 @@ public class IngredientController {
         RecipeCommand recipeCommand = recipeService.findByCommandById(recipeId);
 
         IngredientCommand ingredientCommand = new IngredientCommand();
-        ingredientCommand.setRecipeId(recipeId);
-        ingredientCommand.setUnitOfMeasure(new UnitOfMeasureCommand());
-
         model.addAttribute("ingredient", ingredientCommand);
+
+        // init uom
+        ingredientCommand.setUnitOfMeasure(new UnitOfMeasureCommand());
         model.addAttribute("uomList", unitOfMeasureService.listAllUoms());
 
         return "recipe/ingredient/ingredientform";
@@ -68,7 +68,7 @@ public class IngredientController {
         log.debug("Ingredient to be saved: " + command.toString());
         IngredientCommand savedCommand = ingredientService.saveIngredientCommand(command);
 
-        return "redirect:/recipe/" + savedCommand.getRecipeId() + "/ingredient/" + savedCommand.getId() + "/show";
+        return "redirect:/recipe/" + command.getRecipeId() + "/ingredient/" + savedCommand.getId() + "/show";
     }
 
     @GetMapping("/recipe/{recipeId}/ingredient/{id}/delete")

@@ -1,7 +1,6 @@
 package no.kristianped.recipemongo.services;
 
 import lombok.extern.slf4j.Slf4j;
-
 import no.kristianped.recipemongo.commands.RecipeCommand;
 import no.kristianped.recipemongo.converters.RecipeCommandToRecipe;
 import no.kristianped.recipemongo.converters.RecipeToRecipeCommand;
@@ -9,6 +8,7 @@ import no.kristianped.recipemongo.domain.Recipe;
 import no.kristianped.recipemongo.exceptions.NotFoundException;
 import no.kristianped.recipemongo.repositories.RecipeRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -44,6 +44,7 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    @Transactional
     public RecipeCommand saveRecipeCommand(RecipeCommand command) {
         Recipe detachedRecipe = recipeCommandToRecipe.convert(command);
 
@@ -54,6 +55,7 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    @Transactional
     public RecipeCommand findByCommandById(String id) {
         return recipeToRecipeCommand.convert(findById(id));
     }

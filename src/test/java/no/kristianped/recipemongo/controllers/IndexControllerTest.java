@@ -2,11 +2,12 @@ package no.kristianped.recipemongo.controllers;
 
 import no.kristianped.recipemongo.domain.Recipe;
 import no.kristianped.recipemongo.services.RecipeService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
@@ -19,6 +20,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class IndexControllerTest {
 
     @Mock
@@ -27,14 +29,8 @@ class IndexControllerTest {
     @Mock
     Model model;
 
+    @InjectMocks
     IndexController controller;
-
-    @BeforeEach
-    void setup() {
-        MockitoAnnotations.openMocks(this);
-
-        controller = new IndexController(recipeService);
-    }
 
     @Test
     void testMockMVC() throws Exception {

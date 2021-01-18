@@ -34,14 +34,11 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:2.2.0'
 }
 
 test {
     useJUnitPlatform()
-
-    exclude 'no.kristianped.recipemongo.RecipeMongoApplicationTests'
-    exclude 'no.kristianped.recipemongo.repositories.UnitOfMeasureRepositoryIT'
-    exclude 'no.kristianped.recipemongo.services.RecipeServiceIT'
 }
 
 //export test coverage

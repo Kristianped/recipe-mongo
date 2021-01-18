@@ -60,7 +60,6 @@ public class IngredientServiceImpl implements IngredientService {
             } else {
                 //add new Ingredient
                 Ingredient ingredient = ingredientCommandToIngredient.convert(command);
-                ingredient.setRecipe(recipe);
                 recipe.addIngredient(ingredient);
             }
 
@@ -90,16 +89,14 @@ public class IngredientServiceImpl implements IngredientService {
         Optional<Recipe> recipeOptional = recipeRepository.findById(recipeId);
         Recipe recipe = recipeOptional.orElseThrow(() -> new RuntimeException("Could not find recipe with ID: " + recipeId));
 
-        for (Ingredient ingredient : recipe.getIngredients()) {
-            if (ingredient.getId().equals(ingredientId)) {
-                IngredientCommand command = ingredientToIngredientCommand.convert(ingredient);
+        Optional<IngredientCommand> ingredientCommandOptional = recipe.getIngredients().stream()
+                .filter(ingredient -> ingredient.getId().equals(ingredientId))
+                .map(ingredient -> ingredientToIngredientCommand.convert(ingredient)).findFirst();
 
-                if (command != null)
-                    return command;
-            }
-        }
+        IngredientCommand command = ingredientCommandOptional.orElseThrow(() -> new RuntimeException("Could not find ingredient"));
+        command.setRecipeId(recipeId);
 
-        throw new NotFoundException("Could not find ingredient with ID: " + ingredientId);
+        return command;
     }
 
     @Override
@@ -119,7 +116,6 @@ public class IngredientServiceImpl implements IngredientService {
             log.debug("Ingredient with id not found: " + ingredientId);
 
         Ingredient ingredient = ingredientOptional.get();
-        ingredient.setRecipe(null);
         recipe.getIngredients().remove(ingredient);
         recipeRepository.save(recipe);
     }
