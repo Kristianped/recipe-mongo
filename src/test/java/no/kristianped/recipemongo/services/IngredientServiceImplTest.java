@@ -1,12 +1,15 @@
 package no.kristianped.recipemongo.services;
 
 import no.kristianped.recipemongo.commands.IngredientCommand;
+import no.kristianped.recipemongo.commands.UnitOfMeasureCommand;
 import no.kristianped.recipemongo.converters.IngredientCommandToIngredient;
 import no.kristianped.recipemongo.converters.IngredientToIngredientCommand;
 import no.kristianped.recipemongo.converters.UnitOfMeasureCommandToUnitOfMeasure;
 import no.kristianped.recipemongo.converters.UnitOfMeasureToUnitOfMeasureCommand;
 import no.kristianped.recipemongo.domain.Ingredient;
 import no.kristianped.recipemongo.domain.Recipe;
+import no.kristianped.recipemongo.domain.UnitOfMeasure;
+import no.kristianped.recipemongo.exceptions.NotFoundException;
 import no.kristianped.recipemongo.repositories.RecipeRepository;
 import no.kristianped.recipemongo.repositories.UnitOfMeasureRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +19,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -113,5 +116,47 @@ class IngredientServiceImplTest {
         // then
         verify(recipeRepository, times(1)).findById(anyString());
         verify(recipeRepository, times(1)).save(any(Recipe.class));
+    }
+
+    @Test
+    void testSaveRecipeNotPresent() {
+        // when
+        when(recipeRepository.findById(anyString())).thenReturn(Optional.empty());
+        IngredientCommand command = ingredientService.saveIngredientCommand(new IngredientCommand());
+
+        // then
+        assertNull(command.getId());
+        assertNull(command.getRecipeId());
+        assertNull(command.getAmount());
+        assertNull(command.getDescription());
+        assertNull(command.getUnitOfMeasure());
+    }
+
+    @Test
+    void testSaveUomNotPresent() {
+        // given
+        Recipe recipe = new Recipe();
+        recipe.setId("1");
+        Ingredient ingredient = new Ingredient();
+        ingredient.setId("1");
+        recipe.addIngredient(ingredient);
+        UnitOfMeasure uom = new UnitOfMeasure();
+        uom.setId("1");
+        ingredient.setUnitOfMeasure(uom);
+        Optional<Recipe> recipeOptional = Optional.of(recipe);
+
+        // when
+        IngredientCommand command = new IngredientCommand();
+        command.setId("1");
+        command.setRecipeId("1");
+        UnitOfMeasureCommand uomCommand = new UnitOfMeasureCommand();
+        uomCommand.setId("2");
+        command.setUnitOfMeasure(uomCommand);
+        when(recipeRepository.findById(anyString())).thenReturn(recipeOptional);
+
+        // then
+        assertThrows(NotFoundException.class, () -> {
+            IngredientCommand savedCommand = ingredientService.saveIngredientCommand(command);
+        });
     }
 }
