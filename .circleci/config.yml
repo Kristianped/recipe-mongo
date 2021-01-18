@@ -48,8 +48,8 @@ jobs:
 
       #Codecov integration
       - run:
-        name: Send to CodeCov
-        command: bash <(curl -s https://codecov.io/bash)
+          name: Send to CodeCov
+          command: bash <(curl -s https://codecov.io/bash)
 
 workflows:
   version: 2
