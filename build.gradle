@@ -24,6 +24,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.hibernate.validator:hibernate-validator:6.1.6.Final'
+    implementation 'com.google.code.findbugs:jsr305:3.0.2'
     implementation 'org.webjars:bootstrap:3.4.1'
     implementation 'org.webjars:jquery:1.12.4'
 
