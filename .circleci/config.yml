@@ -1,5 +1,5 @@
 # Check https://circleci.com/docs/2.0/language-java/ for more details
-# Using gradle with this
+#
 version: 2
 jobs:
   build:
@@ -47,10 +47,10 @@ jobs:
           when: always
 
       - store_test_results:
-          path: target/surefire-reports
+          path: ~/junit
 
       - store_artifacts:
-          path: target/site/jacoco/index.html
+          path: ~/junit
 
       - run:
           name: Send to CodeCov
