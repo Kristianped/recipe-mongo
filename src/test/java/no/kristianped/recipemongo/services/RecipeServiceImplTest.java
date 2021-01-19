@@ -1,7 +1,7 @@
 package no.kristianped.recipemongo.services;
 
-import no.kristianped.recipemongo.converters.RecipeCommandToRecipe;
-import no.kristianped.recipemongo.converters.RecipeToRecipeCommand;
+import no.kristianped.recipemongo.commands.RecipeCommand;
+import no.kristianped.recipemongo.converters.*;
 import no.kristianped.recipemongo.domain.Recipe;
 import no.kristianped.recipemongo.exceptions.NotFoundException;
 import no.kristianped.recipemongo.repositories.RecipeRepository;
@@ -45,8 +45,6 @@ class RecipeServiceImplTest {
         assertThrows(NotFoundException.class, () -> {
             Recipe recipeReturned = recipeService.findById("1");
         });
-
-
     }
 
     @Test
@@ -88,5 +86,46 @@ class RecipeServiceImplTest {
 
         // then
         verify(recipeRepository, times(1)).deleteById(anyString());
+    }
+
+    @Test
+    void testFindByCommandId() {
+        // given
+        Recipe recipe = new Recipe();
+        recipe.setId("1");
+        Optional<Recipe> optionalRecipe = Optional.of(recipe);
+
+        recipeToRecipeCommand = new RecipeToRecipeCommand(new CategoryToCategoryCommand(), new IngredientToIngredientCommand(new UnitOfMeasureToUnitOfMeasureCommand()), new NotesToNotesCommand());
+        recipeService = new RecipeServiceImpl(recipeRepository, recipeCommandToRecipe, recipeToRecipeCommand);
+
+        // when
+        when(recipeRepository.findById(anyString())).thenReturn(optionalRecipe);
+        RecipeCommand command = recipeService.findByCommandById("1");
+
+        // then
+        assertNotNull(command);
+        assertEquals(command.getId(), recipe.getId());
+    }
+
+    @Test
+    void testSaveRecipeCommand() {
+        // given
+        RecipeCommand recipeCommand = new RecipeCommand();
+        recipeCommand.setId("1");
+
+        Recipe recipe = new Recipe();
+        recipe.setId("1");
+
+        recipeToRecipeCommand = new RecipeToRecipeCommand(new CategoryToCategoryCommand(), new IngredientToIngredientCommand(new UnitOfMeasureToUnitOfMeasureCommand()), new NotesToNotesCommand());
+        recipeService = new RecipeServiceImpl(recipeRepository, recipeCommandToRecipe, recipeToRecipeCommand);
+
+        // when
+        when(recipeCommandToRecipe.convert(any())).thenReturn(recipe);
+        when(recipeRepository.save(any())).thenReturn(recipe);
+
+        // then
+        RecipeCommand savedCommand = recipeService.saveRecipeCommand(recipeCommand);
+        assertNotNull(savedCommand);
+        assertEquals(savedCommand.getId(), recipeCommand.getId());
     }
 }

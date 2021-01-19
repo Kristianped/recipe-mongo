@@ -32,14 +32,15 @@ class UnitOfMeasureRepositoryTest {
 
     @Test
     void findUnitOfMeasureByDescription() {
-        Optional<UnitOfMeasure> optionalUnitOfMeasure = unitOfMeasureRepository.findUnitOfMeasureByDescription("Teaspoon");
+        Optional<UnitOfMeasure> optionalUnitOfMeasure = unitOfMeasureRepository.findByDescription("Teaspoon");
 
+        assertTrue(optionalUnitOfMeasure.isPresent());
         assertEquals("Teaspoon", optionalUnitOfMeasure.get().getDescription());
     }
 
     @Test
     void findUnitOfMeasureByDescriptionCup() {
-        Optional<UnitOfMeasure> unitOfMeasureOptional = unitOfMeasureRepository.findUnitOfMeasureByDescription("Cup");
+        Optional<UnitOfMeasure> unitOfMeasureOptional = unitOfMeasureRepository.findByDescription("Cup");
 
         assertTrue(unitOfMeasureOptional.isPresent());
         assertEquals("Cup", unitOfMeasureOptional.get().getDescription());
