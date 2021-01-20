@@ -11,11 +11,13 @@ import no.kristianped.recipemongo.domain.Recipe;
 import no.kristianped.recipemongo.domain.UnitOfMeasure;
 import no.kristianped.recipemongo.exceptions.NotFoundException;
 import no.kristianped.recipemongo.repositories.RecipeRepository;
-import no.kristianped.recipemongo.repositories.UnitOfMeasureRepository;
+import no.kristianped.recipemongo.repositories.reactive.RecipeReactiveRepository;
+import no.kristianped.recipemongo.repositories.reactive.UnitOfMeasureReactiveRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 
@@ -32,7 +34,10 @@ class IngredientServiceImplTest {
     RecipeRepository recipeRepository;
 
     @Mock
-    UnitOfMeasureRepository unitOfMeasureRepository;
+    RecipeReactiveRepository recipeReactiveRepository;
+
+    @Mock
+    UnitOfMeasureReactiveRepository unitOfMeasureRepository;
 
     IngredientServiceImpl ingredientService;
 
@@ -43,7 +48,7 @@ class IngredientServiceImplTest {
         ingredientToIngredientCommand = new IngredientToIngredientCommand(new UnitOfMeasureToUnitOfMeasureCommand());
         ingredientCommandToIngredient = new IngredientCommandToIngredient(new UnitOfMeasureCommandToUnitOfMeasure());
 
-        ingredientService = new IngredientServiceImpl(ingredientToIngredientCommand, ingredientCommandToIngredient, recipeRepository, unitOfMeasureRepository);
+        ingredientService = new IngredientServiceImpl(ingredientToIngredientCommand, ingredientCommandToIngredient, recipeRepository, recipeReactiveRepository, unitOfMeasureRepository);
     }
 
     @Test
@@ -67,13 +72,13 @@ class IngredientServiceImplTest {
         Optional<Recipe> recipeOptional = Optional.of(recipe);
 
         // when
-        when(recipeRepository.findById(anyString())).thenReturn(recipeOptional);
-        IngredientCommand ingredientCommand = ingredientService.findByRecipeIdAndIngredientId("1", "3");
+        when(recipeReactiveRepository.findById(anyString())).thenReturn(Mono.just(recipe));
+        IngredientCommand ingredientCommand = ingredientService.findByRecipeIdAndIngredientId("1", "3").block();
 
         // then
         assertEquals("3", ingredientCommand.getId());
         assertEquals("1", ingredientCommand.getRecipeId());
-        verify(recipeRepository, times(1)).findById(anyString());
+        verify(recipeReactiveRepository, times(1)).findById(anyString());
     }
 
     @Test
@@ -92,7 +97,7 @@ class IngredientServiceImplTest {
         // when
         when(recipeRepository.findById(anyString())).thenReturn(recipeOptional);
         when(recipeRepository.save(any())).thenReturn(savedRecipe);
-        IngredientCommand savedCommand = ingredientService.saveIngredientCommand(command);
+        IngredientCommand savedCommand = ingredientService.saveIngredientCommand(command).block();
 
         // then
         assertEquals("3", savedCommand.getId());
@@ -122,7 +127,7 @@ class IngredientServiceImplTest {
     void testSaveRecipeNotPresent() {
         // when
         when(recipeRepository.findById(anyString())).thenReturn(Optional.empty());
-        IngredientCommand command = ingredientService.saveIngredientCommand(new IngredientCommand());
+        IngredientCommand command = ingredientService.saveIngredientCommand(new IngredientCommand()).block();
 
         // then
         assertNull(command.getId());
@@ -133,7 +138,7 @@ class IngredientServiceImplTest {
     }
 
     @Test
-    void testSaveUomNotPresent() {
+    void testSaveIngredientNotPresent() {
         // given
         Recipe recipe = new Recipe();
         recipe.setId("1");
@@ -156,7 +161,7 @@ class IngredientServiceImplTest {
 
         // then
         assertThrows(NotFoundException.class, () -> {
-            IngredientCommand savedCommand = ingredientService.saveIngredientCommand(command);
+            IngredientCommand savedCommand = ingredientService.saveIngredientCommand(command).block();
         });
     }
 }

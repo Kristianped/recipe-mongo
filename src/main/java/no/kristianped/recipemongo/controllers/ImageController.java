@@ -48,6 +48,10 @@ public class ImageController {
             return;
 
         RecipeCommand recipeCommand = recipeService.findByCommandById(id);
+
+        if (recipeCommand == null || recipeCommand.getImage() == null)
+            return;
+
         byte[] bytes = new byte[recipeCommand.getImage().length];
         int i = 0;
 

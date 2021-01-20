@@ -2,12 +2,13 @@ package no.kristianped.recipemongo.services;
 
 
 import no.kristianped.recipemongo.commands.IngredientCommand;
+import reactor.core.publisher.Mono;
 
 public interface IngredientService {
 
-    IngredientCommand saveIngredientCommand(IngredientCommand command);
+    Mono<IngredientCommand> saveIngredientCommand(IngredientCommand command);
 
-    IngredientCommand findByRecipeIdAndIngredientId(String recipeId, String ingredientId);
+    Mono<IngredientCommand> findByRecipeIdAndIngredientId(String recipeId, String ingredientId);
 
-    void deleteById(String recipeId, String ingredientId);
+    Mono<Void> deleteById(String recipeId, String ingredientId);
 }
