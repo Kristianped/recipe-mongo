@@ -14,6 +14,7 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 class ImageServiceImplTest {
@@ -61,9 +62,12 @@ class ImageServiceImplTest {
 
         // when
         when(recipeRepository.findById(anyString())).thenReturn(Mono.just(recipe));
-        imageService.saveImageFile(id, null);
+        when(recipeRepository.save(any(Recipe.class))).thenReturn(Mono.just(recipe));
+
 
         // then this will throw an exception and the image cannot be saved, since it is null
-        verify(recipeRepository, times(0)).save(argumentCaptor.capture());
+        assertThrows(RuntimeException.class, () -> {
+            imageService.saveImageFile(id, null);
+        });
     }
 }
