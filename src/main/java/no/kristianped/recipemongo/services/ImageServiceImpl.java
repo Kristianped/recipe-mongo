@@ -21,10 +21,8 @@ public class ImageServiceImpl implements ImageService {
     public Mono<Void> saveImageFile(String id, MultipartFile file) {
         Mono<Recipe> recipeMono = recipeRepository.findById(id)
                 .map(recipe -> {
-                    Byte[] bytes = new Byte[0];
-
                     try {
-                        bytes = new Byte[file.getBytes().length];
+                        Byte[] bytes = new Byte[file.getBytes().length];
                         int i = 0;
 
                         for (byte b : file.getBytes())
@@ -33,18 +31,12 @@ public class ImageServiceImpl implements ImageService {
                         recipe.setImage(bytes);
                         return recipe;
                     } catch (Exception e) {
-                        log.error("Error occured", e);
                         e.printStackTrace();
+                        throw new RuntimeException();
                     }
-                    return null;
                 });
 
-        try {
-            recipeRepository.save(recipeMono.block());
-        } catch (Exception e) {
-            // just catch
-        }
-
+        recipeRepository.save(recipeMono.block());
 
         return Mono.empty();
     }

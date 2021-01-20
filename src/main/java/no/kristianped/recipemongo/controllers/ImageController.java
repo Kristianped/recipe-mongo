@@ -1,6 +1,7 @@
 package no.kristianped.recipemongo.controllers;
 
 import no.kristianped.recipemongo.commands.RecipeCommand;
+import no.kristianped.recipemongo.domain.Recipe;
 import no.kristianped.recipemongo.services.ImageService;
 import no.kristianped.recipemongo.services.RecipeService;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
@@ -46,6 +47,8 @@ public class ImageController {
     public void renderImageFromDB(@PathVariable String id, HttpServletResponse response) throws IOException {
         if (id == null)
             return;
+
+        Recipe recipe = recipeService.findById(id).block();
 
         RecipeCommand recipeCommand = recipeService.findByCommandById(id).block();
 
