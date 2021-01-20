@@ -45,6 +45,24 @@ class ImageServiceImplTest {
         Mockito.verify(recipeRepository, Mockito.times(1)).save(argumentCaptor.capture());
         Recipe savedRecipe = argumentCaptor.getValue();
         assertEquals(file.getBytes().length, savedRecipe.getImage().length);
+    }
 
+    @Test
+    void saveImageFileException() throws IOException {
+        // given
+        String id = "1";
+        MultipartFile file = new MockMultipartFile("imagefile", "testing.txt", "text/plain", "Kristian".getBytes());
+
+        Recipe recipe = new Recipe();
+        recipe.setId(id);
+        Optional<Recipe> recipeOptional = Optional.of(recipe);
+        ArgumentCaptor<Recipe> argumentCaptor = ArgumentCaptor.forClass(Recipe.class);
+
+        // when
+        Mockito.when(recipeRepository.findById(ArgumentMatchers.anyString())).thenReturn(recipeOptional);
+        imageService.saveImageFile(id, null);
+
+        // then this will throw an exception and the image cannot be saved, since it is null
+        Mockito.verify(recipeRepository, Mockito.times(0)).save(argumentCaptor.capture());
     }
 }
