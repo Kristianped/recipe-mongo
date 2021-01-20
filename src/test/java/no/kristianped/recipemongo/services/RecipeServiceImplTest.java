@@ -4,15 +4,17 @@ import no.kristianped.recipemongo.commands.RecipeCommand;
 import no.kristianped.recipemongo.converters.*;
 import no.kristianped.recipemongo.domain.Recipe;
 import no.kristianped.recipemongo.exceptions.NotFoundException;
-import no.kristianped.recipemongo.repositories.RecipeRepository;
+import no.kristianped.recipemongo.repositories.reactive.RecipeReactiveRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -22,7 +24,7 @@ class RecipeServiceImplTest {
     RecipeServiceImpl recipeService;
 
     @Mock
-    RecipeRepository recipeRepository;
+    RecipeReactiveRepository recipeRepository;
 
     @Mock
     RecipeToRecipeCommand recipeToRecipeCommand;
@@ -40,10 +42,10 @@ class RecipeServiceImplTest {
     void getRecipeByIdNotFound() {
         Optional<Recipe> recipeOptional = Optional.empty();
 
-        when(recipeRepository.findById(anyString())).thenReturn(recipeOptional);
+        when(recipeRepository.findById(anyString())).thenReturn(Mono.empty());
 
         assertThrows(NotFoundException.class, () -> {
-            Recipe recipeReturned = recipeService.findById("1");
+            recipeService.findById("1");
         });
     }
 
@@ -51,11 +53,10 @@ class RecipeServiceImplTest {
     void getRecipeById() {
         Recipe recipe = new Recipe();
         recipe.setId("1");
-        Optional<Recipe> recipeOptional = Optional.of(recipe);
 
-        when(recipeRepository.findById(anyString())).thenReturn(recipeOptional);
+        when(recipeRepository.findById(anyString())).thenReturn(Mono.just(recipe));
 
-        Recipe recipeReturned = recipeService.findById("1");
+        Recipe recipeReturned = recipeService.findById("1").block();
 
         assertNotNull(recipeReturned);
         verify(recipeRepository, times(1)).findById(anyString());
@@ -67,10 +68,11 @@ class RecipeServiceImplTest {
         Recipe recipe = new Recipe();
         HashSet<Recipe> recipesData = new HashSet<>();
         recipesData.add(recipe);
+        Flux<Recipe> recipeFlux = Flux.just(recipe);
 
-        when(recipeRepository.findAll()).thenReturn(recipesData);
+        when(recipeRepository.findAll()).thenReturn(recipeFlux);
 
-        Set<Recipe> recipes = recipeService.getRecipes();
+        List<Recipe> recipes = recipeService.getRecipes().collectList().block();
 
         assertEquals(recipes.size(), 1);
         verify(recipeRepository, times(1)).findAll();
@@ -99,8 +101,8 @@ class RecipeServiceImplTest {
         recipeService = new RecipeServiceImpl(recipeRepository, recipeCommandToRecipe, recipeToRecipeCommand);
 
         // when
-        when(recipeRepository.findById(anyString())).thenReturn(optionalRecipe);
-        RecipeCommand command = recipeService.findByCommandById("1");
+        when(recipeRepository.findById(anyString())).thenReturn(Mono.just(recipe));
+        RecipeCommand command = recipeService.findByCommandById("1").block();
 
         // then
         assertNotNull(command);
@@ -121,10 +123,10 @@ class RecipeServiceImplTest {
 
         // when
         when(recipeCommandToRecipe.convert(any())).thenReturn(recipe);
-        when(recipeRepository.save(any())).thenReturn(recipe);
+        when(recipeRepository.save(any())).thenReturn(Mono.just(recipe));
 
         // then
-        RecipeCommand savedCommand = recipeService.saveRecipeCommand(recipeCommand);
+        RecipeCommand savedCommand = recipeService.saveRecipeCommand(recipeCommand).block();
         assertNotNull(savedCommand);
         assertEquals(savedCommand.getId(), recipeCommand.getId());
     }

@@ -30,7 +30,7 @@ public class ImageController {
 
     @GetMapping("/recipe/{recipeId}/image")
     public String getForm(@PathVariable String recipeId, Model model) {
-        model.addAttribute("recipe", recipeService.findByCommandById(recipeId));
+        model.addAttribute("recipe", recipeService.findByCommandById(recipeId).block());
 
         return "recipe/imageuploadform";
     }
@@ -47,7 +47,7 @@ public class ImageController {
         if (id == null)
             return;
 
-        RecipeCommand recipeCommand = recipeService.findByCommandById(id);
+        RecipeCommand recipeCommand = recipeService.findByCommandById(id).block();
 
         if (recipeCommand == null || recipeCommand.getImage() == null)
             return;

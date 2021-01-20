@@ -3,18 +3,18 @@ package no.kristianped.recipemongo.services;
 
 import no.kristianped.recipemongo.commands.RecipeCommand;
 import no.kristianped.recipemongo.domain.Recipe;
-
-import java.util.Set;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public interface RecipeService {
 
-    Set<Recipe> getRecipes();
+    Flux<Recipe> getRecipes();
 
-    Recipe findById(String anyLong);
+    Mono<Recipe> findById(String anyLong);
 
-    RecipeCommand saveRecipeCommand(RecipeCommand command);
+    Mono<RecipeCommand> saveRecipeCommand(RecipeCommand command);
 
-    RecipeCommand findByCommandById(String id);
+    Mono<RecipeCommand> findByCommandById(String id);
 
-    void deleteById(String id);
+    Mono<Void> deleteById(String id);
 }

@@ -33,14 +33,14 @@ public class IngredientController {
 
     @GetMapping("/recipe/{recipeId}/ingredients")
     public String listIngredients(@PathVariable String recipeId, Model model) {
-        model.addAttribute("recipe", recipeService.findByCommandById(recipeId));
+        model.addAttribute("recipe", recipeService.findByCommandById(recipeId).block());
 
         return "recipe/ingredient/list";
     }
 
     @GetMapping("/recipe/{recipeId}/ingredient/new")
     public String newIngredient(@PathVariable String recipeId, Model model) {
-        RecipeCommand recipeCommand = recipeService.findByCommandById(recipeId);
+        RecipeCommand recipeCommand = recipeService.findByCommandById(recipeId).block();
 
         IngredientCommand ingredientCommand = new IngredientToIngredientCommand(new UnitOfMeasureToUnitOfMeasureCommand()).convert(new Ingredient());
         ingredientCommand.setRecipeId(recipeId);
