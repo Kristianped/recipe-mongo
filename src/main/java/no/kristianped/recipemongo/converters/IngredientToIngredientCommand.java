@@ -1,6 +1,8 @@
 package no.kristianped.recipemongo.converters;
 
-import lombok.Synchronized;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import no.kristianped.recipemongo.commands.IngredientCommand;
 import no.kristianped.recipemongo.domain.Ingredient;
 import org.springframework.core.convert.converter.Converter;
@@ -8,15 +10,12 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 @Component
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor
 public class IngredientToIngredientCommand implements Converter<Ingredient, IngredientCommand> {
 
-    private final UnitOfMeasureToUnitOfMeasureCommand converter;
+    UnitOfMeasureToUnitOfMeasureCommand converter;
 
-    public IngredientToIngredientCommand(UnitOfMeasureToUnitOfMeasureCommand converter) {
-        this.converter = converter;
-    }
-
-    @Synchronized
     @Nullable
     @Override
     public IngredientCommand convert(Ingredient source) {
@@ -25,7 +24,6 @@ public class IngredientToIngredientCommand implements Converter<Ingredient, Ingr
 
         final IngredientCommand ingredientCommand = new IngredientCommand();
         ingredientCommand.setId(source.getId());
-
         ingredientCommand.setAmount(source.getAmount());
         ingredientCommand.setDescription(source.getDescription());
         ingredientCommand.setUnitOfMeasure(converter.convert(source.getUnitOfMeasure()));

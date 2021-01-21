@@ -4,17 +4,19 @@ import no.kristianped.recipemongo.domain.Recipe;
 import no.kristianped.recipemongo.repositories.reactive.RecipeReactiveRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.core.io.buffer.DefaultDataBufferFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.codec.multipart.FilePart;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 class ImageServiceImplTest {
@@ -34,7 +36,41 @@ class ImageServiceImplTest {
     void saveImageFile() throws IOException {
         // given
         String id = "1";
-        MultipartFile file = new MockMultipartFile("imagefile", "testing.txt", "text/plain", "Kristian".getBytes());
+        FilePart filePart = new FilePart() {
+            @Override
+            public String filename() {
+                return "testing.txt";
+            }
+
+            @Override
+            public Mono<Void> transferTo(Path dest) {
+                return DataBufferUtils.write(content(), dest);
+            }
+
+            @Override
+            public String name() {
+                return "imagefile";
+            }
+
+            @Override
+            public HttpHeaders headers() {
+                HttpHeaders headers = new HttpHeaders();
+                headers.add("Content-Disposition", "form-data");
+                headers.add("Content-Disposition", "name=\"imagefile\"");
+                headers.add("Content-Disposition", "filename=\"testing.txt\"");
+
+                headers.add("Content-Type", "text/plain");
+
+                return headers;
+            }
+
+            @Override
+            public Flux<DataBuffer> content() {
+                DefaultDataBufferFactory factory = new DefaultDataBufferFactory();
+
+                return Flux.just(factory.wrap("Kristian".getBytes()));
+            }
+        };
 
         Recipe recipe = new Recipe();
         recipe.setId(id);
@@ -43,31 +79,10 @@ class ImageServiceImplTest {
         when(recipeRepository.findById(anyString())).thenReturn(Mono.just(recipe));
         when(recipeRepository.save(any(Recipe.class))).thenReturn(Mono.just(recipe));
 
-        ArgumentCaptor<Recipe> argumentCaptor = ArgumentCaptor.forClass(Recipe.class);
-        imageService.saveImageFile(id, file);
+        imageService.saveImageFile(id, filePart);
 
         // then
-        verify(recipeRepository, times(1)).save(argumentCaptor.capture());
-        Recipe savedRecipe = argumentCaptor.getValue();
-        assertEquals(file.getBytes().length, savedRecipe.getImage().length);
-    }
-
-    @Test
-    void saveImageFileException() throws IOException {
-        // given
-        String id = "1";
-        Recipe recipe = new Recipe();
-        recipe.setId(id);
-        ArgumentCaptor<Recipe> argumentCaptor = ArgumentCaptor.forClass(Recipe.class);
-
-        // when
-        when(recipeRepository.findById(anyString())).thenReturn(Mono.just(recipe));
-        when(recipeRepository.save(any(Recipe.class))).thenReturn(Mono.just(recipe));
-
-
-        // then this will throw an exception and the image cannot be saved, since it is null
-        assertThrows(RuntimeException.class, () -> {
-            imageService.saveImageFile(id, null);
-        });
+        verify(recipeRepository, times(1)).findById(anyString());
+        verify(recipeRepository, times(1)).save(any());
     }
 }

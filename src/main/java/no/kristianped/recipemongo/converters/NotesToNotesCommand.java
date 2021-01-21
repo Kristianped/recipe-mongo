@@ -1,6 +1,5 @@
 package no.kristianped.recipemongo.converters;
 
-import lombok.Synchronized;
 import no.kristianped.recipemongo.commands.NotesCommand;
 import no.kristianped.recipemongo.domain.Notes;
 import org.springframework.core.convert.converter.Converter;
@@ -10,7 +9,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class NotesToNotesCommand implements Converter<Notes, NotesCommand> {
 
-    @Synchronized
     @Nullable
     @Override
     public NotesCommand convert(Notes source) {

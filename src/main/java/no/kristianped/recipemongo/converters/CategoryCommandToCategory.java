@@ -1,6 +1,5 @@
 package no.kristianped.recipemongo.converters;
 
-import lombok.Synchronized;
 import no.kristianped.recipemongo.commands.CategoryCommand;
 import no.kristianped.recipemongo.domain.Category;
 import org.springframework.core.convert.converter.Converter;
@@ -10,7 +9,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class CategoryCommandToCategory implements Converter<CategoryCommand, Category> {
 
-    @Synchronized
     @Nullable
     @Override
     public Category convert(CategoryCommand source) {

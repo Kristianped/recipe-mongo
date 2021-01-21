@@ -1,42 +1,42 @@
 package no.kristianped.recipemongo.services;
 
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import no.kristianped.recipemongo.domain.Recipe;
 import no.kristianped.recipemongo.repositories.reactive.RecipeReactiveRepository;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
 
 @Slf4j
 @Service
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor
 public class ImageServiceImpl implements ImageService {
 
-    private final RecipeReactiveRepository recipeRepository;
-
-    public ImageServiceImpl(RecipeReactiveRepository recipeRepository) {
-        this.recipeRepository = recipeRepository;
-    }
+    RecipeReactiveRepository recipeRepository;
 
     @Override
-    public Mono<Void> saveImageFile(String id, MultipartFile file) {
-        Mono<Recipe> recipeMono = recipeRepository.findById(id)
-                .map(recipe -> {
-                    try {
-                        Byte[] bytes = new Byte[file.getBytes().length];
-                        int i = 0;
+    public Mono<Void> saveImageFile(String id, FilePart file) {
+        Mono<Recipe> recipeMono = recipeRepository.findById(id);
 
-                        for (byte b : file.getBytes())
-                            bytes[i++] = b;
+        recipeMono.map(recipe -> {
+            file.content().map(dataBuffer -> {
+                byte[] bytes = new byte[dataBuffer.readableByteCount()];
+                dataBuffer.read(bytes);
+                DataBufferUtils.release(dataBuffer);
 
-                        recipe.setImage(bytes);
-                        return recipe;
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        throw new RuntimeException();
-                    }
-                });
+                recipe.setImage(bytes);
+                recipeRepository.save(recipe).subscribe(result -> log.debug("Recipe image has been saved"));
+                return bytes;
+            }).subscribe();
 
-        recipeRepository.save(recipeMono.block());
+
+            return recipe;
+        }).subscribe();
 
         return Mono.empty();
     }

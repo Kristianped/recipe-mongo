@@ -1,14 +1,14 @@
 package no.kristianped.recipemongo.commands;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@ToString
 public class UnitOfMeasureCommand {
-
-    private String id;
-    private String description;
+    String id;
+    String description;
 }

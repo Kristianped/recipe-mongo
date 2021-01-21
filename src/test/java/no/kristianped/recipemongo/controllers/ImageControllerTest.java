@@ -5,37 +5,47 @@ import no.kristianped.recipemongo.services.ImageService;
 import no.kristianped.recipemongo.services.RecipeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.springframework.mock.web.MockHttpServletResponse;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.core.io.buffer.DefaultDataBufferFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.test.web.reactive.server.EntityExchangeResult;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.web.reactive.function.BodyInserters;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@ExtendWith(MockitoExtension.class)
+@WebFluxTest(controllers = ImageController.class)
 class ImageControllerTest {
 
-    @Mock
+    @MockBean
     ImageService imageService;
 
-    @Mock
+    @MockBean
     RecipeService recipeService;
 
     ImageController imageController;
 
-    MockMvc mockMvc;
+    @Autowired
+    WebTestClient webTestClient;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         imageController = new ImageController(recipeService, imageService);
-        mockMvc = MockMvcBuilders.standaloneSetup(imageController).build();
     }
 
     @Test
@@ -48,9 +58,10 @@ class ImageControllerTest {
         Mockito.when(recipeService.findByCommandById(ArgumentMatchers.anyString())).thenReturn(Mono.just(recipeCommand));
 
         // then
-        mockMvc.perform(MockMvcRequestBuilders.get("/recipe/1/image"))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.model().attributeExists("recipe"));
+        webTestClient.get().uri("/recipe/1/image")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody().returnResult();
         Mockito.verify(recipeService, Mockito.times(1)).findByCommandById(ArgumentMatchers.anyString());
     }
 
@@ -58,11 +69,47 @@ class ImageControllerTest {
     void handleImagePost() throws Exception {
         // given
         MockMultipartFile multipartFile = new MockMultipartFile("imagefile", "testing.txt", "text/plain", "Kristian".getBytes());
+        FilePart filePart = new FilePart() {
+            @Override
+            public String filename() {
+                return "testing.txt";
+            }
 
-        // then
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/recipe/1/image").file(multipartFile))
-                .andExpect(MockMvcResultMatchers.status().is3xxRedirection())
-                .andExpect(MockMvcResultMatchers.header().string("Location", "/recipe/1/show"));
+            @Override
+            public Mono<Void> transferTo(Path dest) {
+                return DataBufferUtils.write(content(), dest);
+            }
+
+            @Override
+            public String name() {
+                return "imagefile";
+            }
+
+            @Override
+            public HttpHeaders headers() {
+                HttpHeaders headers = new HttpHeaders();
+                headers.add("Content-Disposition", "form-data");
+                headers.add("Content-Disposition", "name=\"imagefile\"");
+                headers.add("Content-Disposition", "filename=\"testing.txt\"");
+
+                headers.add("Content-Type", "text/plain");
+
+                return headers;
+            }
+
+            @Override
+            public Flux<DataBuffer> content() {
+                DefaultDataBufferFactory factory = new DefaultDataBufferFactory();
+
+                return Flux.just(factory.wrap("Kristian".getBytes()));
+            }
+        };
+
+        webTestClient.post().uri("/recipe/1/image")
+                .body(BodyInserters.fromMultipartData("imagefile", filePart))
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().location("/recipe/1/show");
 
         Mockito.verify(imageService, Mockito.times(1)).saveImageFile(ArgumentMatchers.anyString(), ArgumentMatchers.any());
     }
@@ -74,23 +121,21 @@ class ImageControllerTest {
         recipeCommand.setId("1");
 
         String s = "fake image text";
-        Byte[] bytes = new Byte[s.getBytes().length];
-        int i = 0;
 
-        for (byte b : s.getBytes())
-            bytes[i++] = b;
-
-        recipeCommand.setImage(bytes);
+        recipeCommand.setImage(s.getBytes());
 
         // when
         Mockito.when(recipeService.findByCommandById(ArgumentMatchers.anyString())).thenReturn(Mono.just(recipeCommand));
 
         // then
-        MockHttpServletResponse response = mockMvc.perform(MockMvcRequestBuilders.get("/recipe/1/recipeimage"))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andReturn().getResponse();
 
-        byte[] responseBytes = response.getContentAsByteArray();
+        EntityExchangeResult<byte[]> result = webTestClient.get()
+                .uri("/recipe/1/recipeimage")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody().returnResult();
+
+        byte[] responseBytes = result.getResponseBody();
         assertEquals(s.getBytes().length, responseBytes.length);
     }
 }

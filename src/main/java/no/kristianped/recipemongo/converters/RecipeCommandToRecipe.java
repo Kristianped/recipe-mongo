@@ -1,6 +1,8 @@
 package no.kristianped.recipemongo.converters;
 
-import lombok.Synchronized;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import no.kristianped.recipemongo.commands.RecipeCommand;
 import no.kristianped.recipemongo.domain.Recipe;
 import org.springframework.core.convert.converter.Converter;
@@ -8,20 +10,14 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 @Component
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor
 public class RecipeCommandToRecipe implements Converter<RecipeCommand, Recipe> {
 
-    private final CategoryCommandToCategory categoryConverter;
-    private final IngredientCommandToIngredient ingredientConverter;
-    private final NotesCommandToNotes notesConverter;
+    CategoryCommandToCategory categoryConverter;
+    IngredientCommandToIngredient ingredientConverter;
+    NotesCommandToNotes notesConverter;
 
-    public RecipeCommandToRecipe(CategoryCommandToCategory categoryConverter,
-                                 IngredientCommandToIngredient ingredientConverter, NotesCommandToNotes notesConverter) {
-        this.categoryConverter = categoryConverter;
-        this.ingredientConverter = ingredientConverter;
-        this.notesConverter = notesConverter;
-    }
-
-    @Synchronized
     @Nullable
     @Override
     public Recipe convert(RecipeCommand source) {
@@ -41,10 +37,10 @@ public class RecipeCommandToRecipe implements Converter<RecipeCommand, Recipe> {
         recipe.setNotes(notesConverter.convert(source.getNotes()));
 
         if (source.getCategories() != null && !(source.getCategories().isEmpty()))
-            source.getCategories().forEach(cat -> recipe.getCategories().add(categoryConverter.convert(cat)));
+            source.getCategories().stream().map(categoryConverter::convert).forEach(recipe.getCategories()::add);
 
         if (source.getIngredients() != null && !(source.getIngredients().isEmpty()))
-            source.getIngredients().forEach(ingredient -> recipe.getIngredients().add(ingredientConverter.convert(ingredient)));
+            source.getIngredients().stream().map(ingredientConverter::convert).forEach(recipe.getIngredients()::add);
 
         return recipe;
     }

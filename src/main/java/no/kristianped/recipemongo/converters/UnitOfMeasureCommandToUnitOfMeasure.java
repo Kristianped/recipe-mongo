@@ -1,6 +1,5 @@
 package no.kristianped.recipemongo.converters;
 
-import lombok.Synchronized;
 import no.kristianped.recipemongo.commands.UnitOfMeasureCommand;
 import no.kristianped.recipemongo.domain.UnitOfMeasure;
 import org.springframework.core.convert.converter.Converter;
@@ -10,7 +9,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class UnitOfMeasureCommandToUnitOfMeasure implements Converter<UnitOfMeasureCommand, UnitOfMeasure> {
 
-    @Synchronized
     @Nullable
     @Override
     public UnitOfMeasure convert(UnitOfMeasureCommand source) {

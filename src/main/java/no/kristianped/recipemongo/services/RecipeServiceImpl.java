@@ -1,11 +1,13 @@
 package no.kristianped.recipemongo.services;
 
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import no.kristianped.recipemongo.commands.RecipeCommand;
 import no.kristianped.recipemongo.converters.RecipeCommandToRecipe;
 import no.kristianped.recipemongo.converters.RecipeToRecipeCommand;
 import no.kristianped.recipemongo.domain.Recipe;
-import no.kristianped.recipemongo.exceptions.NotFoundException;
 import no.kristianped.recipemongo.repositories.reactive.RecipeReactiveRepository;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -13,17 +15,13 @@ import reactor.core.publisher.Mono;
 
 @Slf4j
 @Service
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor
 public class RecipeServiceImpl implements RecipeService {
 
-    private final RecipeReactiveRepository recipeRepository;
-    private final RecipeCommandToRecipe recipeCommandToRecipe;
-    private final RecipeToRecipeCommand recipeToRecipeCommand;
-
-    public RecipeServiceImpl(RecipeReactiveRepository recipeRepository, RecipeCommandToRecipe recipeCommandToRecipe, RecipeToRecipeCommand recipeToRecipeCommand) {
-        this.recipeRepository = recipeRepository;
-        this.recipeCommandToRecipe = recipeCommandToRecipe;
-        this.recipeToRecipeCommand = recipeToRecipeCommand;
-    }
+    RecipeReactiveRepository recipeRepository;
+    RecipeCommandToRecipe recipeCommandToRecipe;
+    RecipeToRecipeCommand recipeToRecipeCommand;
 
     @Override
     public Flux<Recipe> getRecipes() {
@@ -33,17 +31,7 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     public Mono<Recipe> findById(String l) {
-        Mono<Recipe> recipeMono = recipeRepository.findById(l);
-
-        try {
-            Recipe recipe = recipeMono.block();
-            if (recipe == null)
-                throw new NullPointerException();
-        } catch (Exception e) {
-            throw new NotFoundException("Could not find recipe with ID " + l);
-        }
-
-        return recipeMono;
+        return recipeRepository.findById(l);
     }
 
     @Override
@@ -55,23 +43,12 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     public Mono<RecipeCommand> findByCommandById(String id) {
         return recipeRepository.findById(id)
-                .map(recipe -> {
-                   RecipeCommand recipeCommand = recipeToRecipeCommand.convert(recipe);
-                   recipeCommand.getIngredients().forEach(rc -> rc.setRecipeId(recipeCommand.getId()));
-
-                   return recipeCommand;
-                });
+                .map(recipeToRecipeCommand::convert)
+                .doOnNext(recipeCommand -> recipeCommand.getIngredients().forEach(ingredient -> ingredient.setRecipeId(recipeCommand.getId())));
     }
 
     @Override
     public Mono<Void> deleteById(String id) {
-        try {
-            recipeRepository.deleteById(id).block();
-        } catch (Exception e) {
-            // just catch
-        }
-
-
-        return Mono.empty();
+        return recipeRepository.deleteById(id).then();
     }
 }

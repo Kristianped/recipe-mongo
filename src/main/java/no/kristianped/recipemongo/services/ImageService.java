@@ -1,9 +1,9 @@
 package no.kristianped.recipemongo.services;
 
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.codec.multipart.FilePart;
 import reactor.core.publisher.Mono;
 
 public interface ImageService {
 
-    Mono<Void> saveImageFile(String id, MultipartFile file);
+    Mono<Void> saveImageFile(String id, FilePart file);
 }

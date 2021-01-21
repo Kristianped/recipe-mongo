@@ -1,8 +1,7 @@
 package no.kristianped.recipemongo.commands;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 import no.kristianped.recipemongo.domain.Difficulty;
 import org.hibernate.validator.constraints.URL;
 
@@ -16,35 +15,37 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@ToString
 public class RecipeCommand {
-    private String id;
+    String id;
 
     @NotBlank
     @Size(min = 3, max = 255)
-    private String description;
+    String description;
 
     @Min(1)
     @Max(999)
-    private Integer prepTime;
+    Integer prepTime;
 
     @Min(1)
     @Max(999)
-    private Integer cookTime;
+    Integer cookTime;
 
     @Min(1)
     @Max(100)
-    private Integer servings;
-    private String source;
+    Integer servings;
+    String source;
 
     @URL
-    private String url;
+    String url;
 
     @NotBlank
-    private String directions;
+    String directions;
 
-    private List<IngredientCommand> ingredients = new ArrayList<>();
-    private Byte[] image;
-    private Difficulty difficulty;
-    private NotesCommand notes;
-    private List<CategoryCommand> categories = new ArrayList<>();
+    List<IngredientCommand> ingredients = new ArrayList<>();
+    byte[] image;
+    Difficulty difficulty;
+    NotesCommand notes;
+    List<CategoryCommand> categories = new ArrayList<>();
 }
